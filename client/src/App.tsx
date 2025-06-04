@@ -2,10 +2,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-//import './styles/global.css';
-import "./styles/global.scss";
 
-function App() {
+export default function App() {
   return (
     <Router>
       <Routes>
@@ -17,5 +15,3 @@ function App() {
     </Router>
   );
 }
-
-export default App;
