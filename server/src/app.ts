@@ -19,11 +19,12 @@ app.use(express.json());
 
 // apps
 app.use('/api/auth', authRoutes);
-app.use('/api/tasks', tasksRoutes);
 app.use('/api/categories', categoriesRoutes);
 app.use('/api/tags', tagsRoutes);
 app.use('/api/timeLogs', timeLogsRoutes);
 app.use('/api/tasks', taskRoutes);
+//app.use('/api/tasks', tasksRoutes);
+//app.use('/api/tasks', taskRoutes);
 
 app.get('/', (_req, res) => {
   res.send('API is running...');

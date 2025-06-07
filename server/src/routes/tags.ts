@@ -1,8 +1,8 @@
-import { Router } from 'express';
-import { getTags, createTag, deleteTag } from '../controllers/tagController';
+import express from 'express';
+import { createTag, getTags, deleteTag } from '../controllers/tagController';
 import { authMiddleware } from '../middleware/auth';
 
-const router = Router();
+const router = express.Router();
 
 router.use(authMiddleware);
 router.get('/', getTags);

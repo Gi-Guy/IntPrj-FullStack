@@ -14,7 +14,13 @@ export const getTags = async (req: Request, res: Response) => {
 export const createTag = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
-    const tag = new Tag({ ...req.body, userId });
+    const { name, color } = req.body;
+    if (!name || !color) return res.status(400).json({ message: 'Name and color are required' });
+
+    const existing = await Tag.findOne({ name, userId });
+    if (existing) return res.status(409).json({ message: 'Tag already exists' });
+
+    const tag = new Tag({ name, color, userId });
     const saved = await tag.save();
     res.status(201).json(saved);
   } catch (err) {

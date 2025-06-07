@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import '../styles/global.scss';
+import '../styles/dashboard.scss';
 
 type Task = {
   _id: string;
@@ -13,6 +13,7 @@ type Task = {
 type Tag = {
   _id: string;
   name: string;
+  color: string;
 };
 
 export default function Dashboard() {
@@ -22,7 +23,8 @@ export default function Dashboard() {
   const [description, setDescription] = useState('');
   const [tag, setTag] = useState('');
   const [tags, setTags] = useState<Tag[]>([]);
-  const [newTag, setNewTag] = useState('');
+  const [newTagName, setNewTagName] = useState('');
+  const [newTagColor, setNewTagColor] = useState('');
 
   const getAuthHeader = () => {
     const token = localStorage.getItem('token');
@@ -42,9 +44,7 @@ export default function Dashboard() {
     const headers = getAuthHeader();
     if (!headers) return;
     try {
-      const res = await axios.get('/tasks', {
-        headers,
-      });
+      const res = await axios.get('/tasks', { headers });
       setTasks(res.data);
     } catch (err) {
       console.error('Failed to fetch tasks', err);
@@ -55,9 +55,7 @@ export default function Dashboard() {
     const headers = getAuthHeader();
     if (!headers) return;
     try {
-      const res = await axios.get('/tags', {
-        headers,
-      });
+      const res = await axios.get('/tags', { headers });
       setTags(res.data);
     } catch (err) {
       console.error('Failed to fetch tags', err);
@@ -74,11 +72,7 @@ export default function Dashboard() {
     const headers = getAuthHeader();
     if (!headers) return;
     try {
-      const res = await axios.post(
-        '/tasks',
-        { title, description, tag },
-        { headers }
-      );
+      const res = await axios.post('/tasks', { title, description, tag }, { headers });
       setTasks((prev) => [...prev, res.data]);
       setTitle('');
       setDescription('');
@@ -92,16 +86,34 @@ export default function Dashboard() {
     const headers = getAuthHeader();
     if (!headers) return;
     try {
-      const res = await axios.post(
-        '/tags',
-        { name: newTag },
-        { headers }
-      );
+      const res = await axios.post('/tags', { name: newTagName, color: newTagColor }, { headers });
       setTags((prev) => [...prev, res.data]);
-      setNewTag('');
+      setNewTagName('');
+      setNewTagColor('');
     } catch (err) {
-      console.error('Failed to add tag', err);
+      if (axios.isAxiosError(err) && err.response?.status === 409) {
+        alert('Tag already exists.');
+      } else {
+        console.error('Failed to add tag', err);
+      }
     }
+  };
+
+  const handleDelete = async (taskId: string) => {
+    const headers = getAuthHeader();
+    if (!headers) return;
+    try {
+      await axios.delete(`/tasks/${taskId}`, { headers });
+      setTasks((prev) => prev.filter((task) => task._id !== taskId));
+    } catch (err) {
+      console.error('Failed to delete task', err);
+    }
+  };
+
+  const getTagColorClass = (tagName: string) => {
+    const tag = tags.find((t) => t.name === tagName);
+    if (!tag || typeof tag.color !== 'string') return '';
+    return `tag-${tag.color.toLowerCase()}`;
   };
 
   return (
@@ -114,45 +126,27 @@ export default function Dashboard() {
       </nav>
 
       <form className="form" onSubmit={handleAddTask}>
-        <input
-          type="text"
-          placeholder="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-        />
-        <input
-          type="text"
-          placeholder="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          required
-        />
+        <input type="text" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+        <input type="text" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} required />
         <select value={tag} onChange={(e) => setTag(e.target.value)} required>
-          <option value="" disabled>
-            Select Tag
-          </option>
+          <option value="" disabled>Select Tag</option>
           {tags.map((t) => (
-            <option key={t._id} value={t.name}>
-              {t.name}
-            </option>
+            <option key={t._id} value={t.name}>{t.name}</option>
           ))}
         </select>
-        <button type="submit" className="primary-button">
-          Add Task
-        </button>
+        <button type="submit" className="primary-button">Add Task</button>
       </form>
 
       <div className="form">
-        <input
-          type="text"
-          placeholder="New Tag"
-          value={newTag}
-          onChange={(e) => setNewTag(e.target.value)}
-        />
-        <button className="primary-button" onClick={handleAddTag}>
-          Add Tag
-        </button>
+        <input type="text" placeholder="New Tag" value={newTagName} onChange={(e) => setNewTagName(e.target.value)} />
+        <select value={newTagColor} onChange={(e) => setNewTagColor(e.target.value)}>
+          <option value="">Select Color</option>
+          <option value="red">Red</option>
+          <option value="green">Green</option>
+          <option value="blue">Blue</option>
+          <option value="yellow">Yellow</option>
+        </select>
+        <button className="primary-button" onClick={handleAddTag}>Add Tag</button>
       </div>
 
       <div className="task-grid">
@@ -160,7 +154,11 @@ export default function Dashboard() {
           <div key={task._id} className="task-card">
             <h3>{task.title}</h3>
             <p>{task.description}</p>
-            <span className="tag">{task.tag}</span>
+            <span className={`tag ${getTagColorClass(task.tag)}`}>{task.tag}</span>
+            <div className="task-actions">
+              <button className="edit">Edit</button>
+              <button className="danger" onClick={() => handleDelete(task._id)}>Delete</button>
+            </div>
           </div>
         ))}
       </div>
