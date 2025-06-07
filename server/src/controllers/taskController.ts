@@ -1,20 +1,24 @@
 import { Request, Response } from 'express';
 import { Task } from '../models/Task';
 
-export const getTasks = async (req: Request, res: Response) => {
+interface AuthRequest extends Request {
+  user?: { userId: string };
+}
+
+export const getMyTasks = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = (req as any).userId;
-    const tasks = await Task.find({ userId });
+    const userId = req.user?.userId;
+    const tasks = await Task.find({ user: userId });
     res.json(tasks);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch tasks', error: err });
   }
 };
 
-export const createTask = async (req: Request, res: Response) => {
+export const createTask = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = (req as any).userId;
-    const task = new Task({ ...req.body, userId });
+    const userId = req.user?.userId;
+    const task = new Task({ ...req.body, user: userId });
     const saved = await task.save();
     res.status(201).json(saved);
   } catch (err) {
@@ -22,11 +26,11 @@ export const createTask = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteTask = async (req: Request, res: Response) => {
+export const deleteTask = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.user?.userId;
     const { id } = req.params;
-    await Task.findOneAndDelete({ _id: id, userId });
+    await Task.findOneAndDelete({ _id: id, user: userId });
     res.json({ message: 'Task deleted' });
   } catch (err) {
     res.status(500).json({ message: 'Failed to delete task', error: err });
