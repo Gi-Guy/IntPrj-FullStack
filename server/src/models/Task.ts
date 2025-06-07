@@ -1,6 +1,6 @@
 import { Schema, model, Document, Types } from 'mongoose';
 
-interface ITask extends Document {
+export interface ITask extends Document {
   userId: Types.ObjectId;
   title: string;
   description?: string;
@@ -8,6 +8,7 @@ interface ITask extends Document {
   dueDate?: Date;
   createdAt: Date;
   updatedAt: Date;
+  tag: string;
 }
 
 const taskSchema = new Schema<ITask>({
@@ -27,6 +28,10 @@ const taskSchema = new Schema<ITask>({
     default: 'todo',
   },
   dueDate: Date,
+  tag: {
+    type: String,
+    required: true,
+  }
 }, {
   timestamps: true,
 });

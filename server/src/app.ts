@@ -8,6 +8,7 @@ import tasksRoutes from './routes/tasks';
 import categoriesRoutes from './routes/categories';
 import tagsRoutes from './routes/tags';
 import timeLogsRoutes from './routes/timeLogs';
+import taskRoutes from './routes/taskRoutes';
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ app.use('/api/tasks', tasksRoutes);
 app.use('/api/categories', categoriesRoutes);
 app.use('/api/tags', tagsRoutes);
 app.use('/api/timeLogs', timeLogsRoutes);
+app.use('/api/tasks', taskRoutes);
 
 app.get('/', (_req, res) => {
   res.send('API is running...');
