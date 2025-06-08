@@ -17,12 +17,20 @@ body, html {
   height: 100%;
   font-family: Arial, sans-serif;
   background-color: #f8f9fa;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+#root {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .page {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  flex: 1;
   padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
@@ -34,6 +42,8 @@ body, html {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  position: relative;
+  z-index: 1;
 }
 
 .navbar h2 {
@@ -46,6 +56,7 @@ body, html {
   gap: 1rem;
   flex-wrap: wrap;
   justify-content: center;
+  z-index: 0;
 }
 
 input[type="text"],
@@ -74,6 +85,29 @@ input[type="color"] {
 
   &:hover {
     background: darken($color-success, 10%);
+  }
+}
+
+.category-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+  padding: 0.5rem 0;
+
+  button {
+    padding: 0.4rem 0.8rem;
+    border: none;
+    cursor: pointer;
+    border-radius: $radius-small;
+    color: white;
+    background-color: #888;
+
+    &.selected {
+      outline: 2px solid black;
+    }
   }
 }
 
@@ -168,24 +202,16 @@ input[type="color"] {
     background: darken($color-primary, 10%);
   }
 }
+.task-actions .done {
+  background: $color-success;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: $radius-small;
+  cursor: pointer;
+  transition: background 0.2s;
 
-.category-bar {
-  margin-bottom: 1.5rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
-
-  button {
-    padding: 0.4rem 0.8rem;
-    border: none;
-    cursor: pointer;
-    border-radius: $radius-small;
-    color: white;
-    background-color: #888;
-
-    &.selected {
-      outline: 2px solid black;
-    }
+  &:hover {
+    background: darken($color-success, 10%);
   }
 }
