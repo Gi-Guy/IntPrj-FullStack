@@ -36,12 +36,36 @@ body, html {
   margin-bottom: 2rem;
 }
 
+.navbar h2 {
+  margin: 0;
+}
+
 .form {
+  margin-bottom: 1.5rem;
   display: flex;
   gap: 1rem;
-  margin-bottom: 2rem;
   flex-wrap: wrap;
   justify-content: center;
+}
+
+input[type="text"],
+select {
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+
+.primary-button {
+  background: $color-success;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: $radius;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: darken($color-success, 10%);
+  }
 }
 
 .task-grid {
@@ -74,22 +98,32 @@ body, html {
   margin: 0 0 0.5rem 0;
 }
 
-.task-card .tag {
+.task-card .tag,
+.task-card .category-label {
   font-size: 0.85rem;
   font-weight: bold;
   color: white;
-  background-color: $color-muted;
   display: inline-block;
   padding: 0.2rem 0.5rem;
   border-radius: $radius-small;
+  margin-right: 0.5rem;
   margin-top: 0.5rem;
   max-width: fit-content;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tag-red    { background-color: #dc3545 !important; }
 .tag-green  { background-color: #198754 !important; }
 .tag-blue   { background-color: #0d6efd !important; }
 .tag-yellow { background-color: #ffc107 !important; }
+
+.category-label.category-gray    { background-color: $color-muted; color: white; }
+.category-label.category-red     { background-color: $color-danger; color: white; }
+.category-label.category-green   { background-color: $color-success; color: white; }
+.category-label.category-blue    { background-color: $color-primary; color: white; }
+.category-label.category-yellow  { background-color: #ffc107; color: #212529; }
 
 .task-actions {
   margin-top: 1rem;
@@ -126,16 +160,23 @@ body, html {
   }
 }
 
-.primary-button {
-  background: $color-success;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: $radius;
-  cursor: pointer;
-  transition: background 0.2s;
+.category-bar {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
 
-  &:hover {
-    background: darken($color-success, 10%);
+  button {
+    padding: 0.4rem 0.8rem;
+    border: none;
+    cursor: pointer;
+    background-color: #f1f1f1;
+    border-radius: $radius-small;
+
+    &.selected {
+      background-color: $color-primary;
+      color: white;
+    }
   }
 }

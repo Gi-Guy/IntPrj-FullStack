@@ -9,6 +9,7 @@ import categoriesRoutes from './routes/categories';
 import tagsRoutes from './routes/tags';
 import timeLogsRoutes from './routes/timeLogs';
 import taskRoutes from './routes/taskRoutes';
+import { authenticate } from './middleware/authMiddleware';
 
 dotenv.config();
 
@@ -18,11 +19,15 @@ app.use(cors());
 app.use(express.json());
 
 // apps
+app.use('/api/categories', authenticate, categoriesRoutes);
+app.use('/api/tasks', authenticate, taskRoutes);
+app.use('/api/tags', authenticate, tagsRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoriesRoutes);
 app.use('/api/tags', tagsRoutes);
 app.use('/api/timeLogs', timeLogsRoutes);
 app.use('/api/tasks', taskRoutes);
+app.use('api/categories', categoriesRoutes);
 //app.use('/api/tasks', tasksRoutes);
 //app.use('/api/tasks', taskRoutes);
 

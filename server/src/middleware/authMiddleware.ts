@@ -18,9 +18,13 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
   const token = authHeader.split(' ')[1];
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!);
-    req.user = decoded as { userId: string };
-    next();
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+    if (typeof decoded === 'object' && 'userId' in decoded) {
+      req.user = { userId: (decoded as any).userId };
+      next();
+    } else {
+      res.status(403).json({ message: 'Token structure invalid' });
+    }
   } catch (err) {
     res.status(403).json({ message: 'Token invalid or expired' });
   }

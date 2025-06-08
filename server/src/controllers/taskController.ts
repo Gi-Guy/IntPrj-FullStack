@@ -20,11 +20,11 @@ export const createTask = async (req: AuthRequest, res: Response) => {
     const userId = req.user?.userId;
     if (!userId) return res.status(401).json({ message: 'Missing userId' });
 
-    const task = new Task({ ...req.body, userId });
+    const { title, description, tag, category } = req.body;
+    const task = new Task({ title, description, tag, category: category || 'General', userId });
     const saved = await task.save();
     res.status(201).json(saved);
   } catch (err) {
-    console.log(err);
     res.status(500).json({ message: 'Failed to create task', error: err });
   }
 };

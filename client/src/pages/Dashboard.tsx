@@ -8,12 +8,19 @@ type Task = {
   title: string;
   description: string;
   tag: string;
+  category: string;
 };
 
 type Tag = {
   _id: string;
   name: string;
   color: string;
+};
+
+type Category = {
+  _id: string;
+  name: string;
+  editable?: boolean;
 };
 
 export default function Dashboard() {
@@ -25,6 +32,10 @@ export default function Dashboard() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [category, setCategory] = useState('GENERAL');
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('GENERAL');
 
   const getAuthHeader = () => {
     const token = localStorage.getItem('token');
@@ -62,21 +73,34 @@ export default function Dashboard() {
     }
   }, []);
 
+  const fetchCategories = useCallback(async () => {
+    const headers = getAuthHeader();
+    if (!headers) return;
+    try {
+      const res = await axios.get('/categories', { headers });
+      setCategories(res.data);
+    } catch (err) {
+      console.error('Failed to fetch categories', err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchTasks();
     fetchTags();
-  }, [fetchTasks, fetchTags]);
+    fetchCategories();
+  }, [fetchTasks, fetchTags, fetchCategories]);
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
     const headers = getAuthHeader();
     if (!headers) return;
     try {
-      const res = await axios.post('/tasks', { title, description, tag }, { headers });
+      const res = await axios.post('/tasks', { title, description, tag, category }, { headers });
       setTasks((prev) => [...prev, res.data]);
       setTitle('');
       setDescription('');
       setTag('');
+      setCategory('GENERAL');
     } catch (err) {
       console.error('Failed to add task', err);
     }
@@ -99,14 +123,27 @@ export default function Dashboard() {
     }
   };
 
-  const handleDelete = async (taskId: string) => {
+  const handleAddCategory = async () => {
     const headers = getAuthHeader();
     if (!headers) return;
     try {
-      await axios.delete(`/tasks/${taskId}`, { headers });
-      setTasks((prev) => prev.filter((task) => task._id !== taskId));
+      const res = await axios.post('/categories', { name: newCategoryName }, { headers });
+      setCategories((prev) => [...prev, res.data]);
+      setNewCategoryName('');
     } catch (err) {
-      console.error('Failed to delete task', err);
+      console.error('Failed to add category', err);
+    }
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    const headers = getAuthHeader();
+    if (!headers) return;
+    try {
+      await axios.delete(`/categories/${id}`, { headers });
+      fetchCategories();
+      fetchTasks();
+    } catch (err) {
+      console.error('Failed to delete category', err);
     }
   };
 
@@ -116,14 +153,50 @@ export default function Dashboard() {
     return `tag-${tag.color.toLowerCase()}`;
   };
 
+  const filteredTasks = selectedCategory === 'GENERAL'
+    ? tasks
+    : tasks.filter(task => task.category === selectedCategory);
+
+  async function handleDelete(_id: string): Promise<void> {
+    const headers = getAuthHeader();
+    if (!headers) return;
+    try {
+      await axios.delete(`/tasks/${_id}`, { headers });
+      setTasks((prev) => prev.filter(task => task._id !== _id));
+    } catch (err) {
+      console.error('Failed to delete task', err);
+    }
+  }
+
   return (
     <div className="page">
       <nav className="navbar">
         <h2>My Tasks</h2>
-        <button className="primary-button" onClick={handleLogout}>
-          Logout
-        </button>
+        <button className="primary-button" onClick={handleLogout}>Logout</button>
       </nav>
+
+      <div className="category-bar">
+        {categories.filter(c => c.name === 'General').map(g => (
+          <button key={g._id} className={selectedCategory === 'GENERAL' ? 'selected' : ''} onClick={() => setSelectedCategory('GENERAL')}>
+            GENERAL
+          </button>
+        ))}
+        {categories.filter(c => c.name !== 'General').map(cat => (
+          <div key={cat._id} className="category-item">
+            <button
+              className={selectedCategory === cat.name ? 'selected' : ''}
+              onClick={() => setSelectedCategory(cat.name)}
+            >
+              {cat.name}
+            </button>
+            {cat.name !== 'GENERAL' && (
+              <button className="edit" onClick={() => handleDeleteCategory(cat._id)}>❌</button>
+            )}
+          </div>
+        ))}
+        <input type="text" placeholder="New Category" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} />
+        <button className="primary-button" onClick={handleAddCategory}>Add</button>
+      </div>
 
       <form className="form" onSubmit={handleAddTask}>
         <input type="text" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
@@ -132,6 +205,12 @@ export default function Dashboard() {
           <option value="" disabled>Select Tag</option>
           {tags.map((t) => (
             <option key={t._id} value={t.name}>{t.name}</option>
+          ))}
+        </select>
+        <select value={category} onChange={(e) => setCategory(e.target.value)} required>
+          <option value="" disabled>Select Category</option>
+          {categories.map((c) => (
+            <option key={c._id} value={c.name}>{c.name}</option>
           ))}
         </select>
         <button type="submit" className="primary-button">Add Task</button>
@@ -150,11 +229,12 @@ export default function Dashboard() {
       </div>
 
       <div className="task-grid">
-        {tasks.map((task) => (
+        {filteredTasks.map((task) => (
           <div key={task._id} className="task-card">
             <h3>{task.title}</h3>
             <p>{task.description}</p>
             <span className={`tag ${getTagColorClass(task.tag)}`}>{task.tag}</span>
+            <span className="category-label">{task.category}</span>
             <div className="task-actions">
               <button className="edit">Edit</button>
               <button className="danger" onClick={() => handleDelete(task._id)}>Delete</button>

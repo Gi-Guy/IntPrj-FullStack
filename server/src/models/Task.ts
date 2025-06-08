@@ -6,9 +6,10 @@ export interface ITask extends Document {
   description?: string;
   status: 'todo' | 'in-progress' | 'done';
   dueDate?: Date;
+  tag: string;
+  category: string;
   createdAt: Date;
   updatedAt: Date;
-  tag: string;
 }
 
 const taskSchema = new Schema<ITask>({
@@ -31,7 +32,11 @@ const taskSchema = new Schema<ITask>({
   tag: {
     type: String,
     required: true,
-  }
+  },
+  category: {
+    type: String,
+    required: true,
+  },
 }, {
   timestamps: true,
 });
