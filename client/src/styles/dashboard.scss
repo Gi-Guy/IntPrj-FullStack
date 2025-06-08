@@ -54,6 +54,15 @@ select {
   font-size: 1rem;
 }
 
+input[type="color"] {
+  width: 40px;
+  height: 40px;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: none;
+}
+
 .primary-button {
   background: $color-success;
   color: white;
@@ -99,7 +108,8 @@ select {
 }
 
 .task-card .tag,
-.task-card .category-label {
+.task-card .category-label,
+.task-card .tag.category {
   font-size: 0.85rem;
   font-weight: bold;
   color: white;
@@ -119,11 +129,10 @@ select {
 .tag-blue   { background-color: #0d6efd !important; }
 .tag-yellow { background-color: #ffc107 !important; }
 
-.category-label.category-gray    { background-color: $color-muted; color: white; }
-.category-label.category-red     { background-color: $color-danger; color: white; }
-.category-label.category-green   { background-color: $color-success; color: white; }
-.category-label.category-blue    { background-color: $color-primary; color: white; }
-.category-label.category-yellow  { background-color: #ffc107; color: #212529; }
+.category-label {
+  color: #fff;
+  background-color: #888;
+}
 
 .task-actions {
   margin-top: 1rem;
@@ -171,12 +180,12 @@ select {
     padding: 0.4rem 0.8rem;
     border: none;
     cursor: pointer;
-    background-color: #f1f1f1;
     border-radius: $radius-small;
+    color: white;
+    background-color: #888;
 
     &.selected {
-      background-color: $color-primary;
-      color: white;
+      outline: 2px solid black;
     }
   }
 }

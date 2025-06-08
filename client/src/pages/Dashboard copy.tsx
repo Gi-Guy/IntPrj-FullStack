@@ -5,6 +5,10 @@ import '../styles/dashboard.scss';
 
 const categoryColors = ['red', 'green', 'blue', 'yellow'];
 
+function getRandomColor() {
+  return categoryColors[Math.floor(Math.random() * categoryColors.length)];
+}
+
 type Task = {
   _id: string;
   title: string;
@@ -22,7 +26,7 @@ type Tag = {
 type Category = {
   _id: string;
   name: string;
-  color?: string;
+  editable?: boolean;
 };
 
 export default function Dashboard() {
@@ -37,7 +41,6 @@ export default function Dashboard() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [category, setCategory] = useState('GENERAL');
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryColor, setNewCategoryColor] = useState('#cccccc');
   const [selectedCategory, setSelectedCategory] = useState('GENERAL');
 
   const getAuthHeader = () => {
@@ -130,13 +133,12 @@ export default function Dashboard() {
     const headers = getAuthHeader();
     if (!headers) return;
     try {
-      const color = newCategoryColor || categoryColors[Math.floor(Math.random() * categoryColors.length)];
+      const color = getRandomColor();
       const res = await axios.post('/categories', { name: newCategoryName, color }, { headers });
       if (res.data) {
         setCategories((prev) => [...prev, res.data]);
       }
       setNewCategoryName('');
-      setNewCategoryColor('#cccccc');
     } catch (err) {
       if (axios.isAxiosError(err)) {
         const msg = err.response?.data?.message || 'Unknown error';
@@ -169,17 +171,6 @@ export default function Dashboard() {
     ? tasks
     : tasks.filter(task => task.category === selectedCategory);
 
-  async function handleDelete(_id: string): Promise<void> {
-    const headers = getAuthHeader();
-    if (!headers) return;
-    try {
-      await axios.delete(`/tasks/${_id}`, { headers });
-      setTasks((prev) => prev.filter(task => task._id !== _id));
-    } catch (err) {
-      console.error('Failed to delete task', err);
-    }
-  }
-
   return (
     <div className="page">
       <nav className="navbar">
@@ -188,11 +179,7 @@ export default function Dashboard() {
       </nav>
 
       <div className="category-bar">
-        <button
-          className={selectedCategory === 'GENERAL' ? 'selected' : ''}
-          onClick={() => setSelectedCategory('GENERAL')}
-          style={{ backgroundColor: '#999' }}
-        >
+        <button className={selectedCategory === 'GENERAL' ? 'selected' : ''} onClick={() => setSelectedCategory('GENERAL')}>
           GENERAL
         </button>
         {categories.filter(c => c.name.toUpperCase() !== 'GENERAL').map(cat => (
@@ -200,24 +187,13 @@ export default function Dashboard() {
             <button
               className={selectedCategory === cat.name ? 'selected' : ''}
               onClick={() => setSelectedCategory(cat.name)}
-              style={{ backgroundColor: cat.color || '#ccc' }}
             >
               {cat.name}
             </button>
-            <button className="edit" onClick={() => handleDeleteCategory(cat._id)}>❌</button>
+            <button className="edit" onClick={() => handleDeleteCategory(cat._id)}>🗑️</button>
           </div>
         ))}
-        <input
-          type="text"
-          placeholder="New Category"
-          value={newCategoryName}
-          onChange={(e) => setNewCategoryName(e.target.value)}
-        />
-        <input
-          type="color"
-          value={newCategoryColor}
-          onChange={(e) => setNewCategoryColor(e.target.value)}
-        />
+        <input type="text" placeholder="New Category" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} />
         <button className="primary-button" onClick={handleAddCategory}>Add</button>
       </div>
 
@@ -252,21 +228,18 @@ export default function Dashboard() {
       </div>
 
       <div className="task-grid">
-        {filteredTasks.map((task) => {
-          const categoryColor = categories.find(c => c.name === task.category)?.color || '#ccc';
-          return (
-            <div key={task._id} className="task-card">
-              <h3>{task.title}</h3>
-              <p>{task.description}</p>
-              <span className={`tag ${getTagColorClass(task.tag)}`}>{task.tag}</span>
-              <span className="tag category" style={{ backgroundColor: categoryColor }}>{task.category}</span>
-              <div className="task-actions">
-                <button className="edit">Edit</button>
-                <button className="danger" onClick={() => handleDelete(task._id)}>Delete</button>
-              </div>
+        {filteredTasks.map((task) => (
+          <div key={task._id} className="task-card">
+            <h3>{task.title}</h3>
+            <p>{task.description}</p>
+            <span className={`tag ${getTagColorClass(task.tag)}`}>{task.tag}</span>
+            <span className="tag category">{task.category}</span>
+            <div className="task-actions">
+              <button className="edit">Edit</button>
+              <button className="danger" onClick={() => handleDelete(task._id)}>Delete</button>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     </div>
   );
