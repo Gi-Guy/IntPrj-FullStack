@@ -57,8 +57,24 @@ body, html {
   flex-wrap: wrap;
   justify-content: center;
   z-index: 0;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+  overflow: hidden;
 }
 
+.form.collapsed {
+  max-height: 0;
+  opacity: 0;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+}
+.form-toggle-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
 input[type="text"],
 select {
   padding: 0.5rem;
@@ -95,7 +111,8 @@ input[type="color"] {
   align-items: center;
   margin-bottom: 1.5rem;
   overflow-x: auto;
-  padding: 0.5rem 0;
+  padding: 0.5rem;
+  box-sizing: border-box;
 
   button {
     padding: 0.4rem 0.8rem;
@@ -104,6 +121,7 @@ input[type="color"] {
     border-radius: $radius-small;
     color: white;
     background-color: #888;
+    flex-shrink: 0;
 
     &.selected {
       outline: 2px solid black;
@@ -200,18 +218,5 @@ input[type="color"] {
 
   &:hover {
     background: darken($color-primary, 10%);
-  }
-}
-.task-actions .done {
-  background: $color-success;
-  color: white;
-  border: none;
-  padding: 0.4rem 0.8rem;
-  border-radius: $radius-small;
-  cursor: pointer;
-  transition: background 0.2s;
-
-  &:hover {
-    background: darken($color-success, 10%);
   }
 }

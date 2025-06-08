@@ -39,6 +39,8 @@ export default function Dashboard() {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#cccccc');
   const [selectedCategory, setSelectedCategory] = useState('GENERAL');
+  const [showTaskForm, setShowTaskForm] = useState(false);
+  const [showTagForm, setShowTagForm] = useState(false);
 
   const getAuthHeader = () => {
     const token = localStorage.getItem('token');
@@ -187,6 +189,15 @@ export default function Dashboard() {
         <button className="primary-button" onClick={handleLogout}>Logout</button>
       </nav>
 
+      <div className="form-toggle-buttons">
+        <button className="primary-button" onClick={() => setShowTaskForm(s => !s)}>
+          {showTaskForm ? 'Close Task Form' : 'Add Task'}
+        </button>
+        <button className="primary-button" onClick={() => setShowTagForm(s => !s)}>
+          {showTagForm ? 'Close Tag Form' : 'Add Tag'}
+        </button>
+      </div>
+
       <div className="category-bar">
         <button
           className={selectedCategory === 'GENERAL' ? 'selected' : ''}
@@ -221,7 +232,7 @@ export default function Dashboard() {
         <button className="primary-button" onClick={handleAddCategory}>Add</button>
       </div>
 
-      <form className="form" onSubmit={handleAddTask}>
+      <form className={`form ${!showTaskForm ? 'collapsed' : ''}`} onSubmit={handleAddTask} style={{ maxWidth: '1000px', margin: '0 auto' }}>
         <input type="text" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
         <input type="text" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} required />
         <select value={tag} onChange={(e) => setTag(e.target.value)} required>
@@ -239,7 +250,7 @@ export default function Dashboard() {
         <button type="submit" className="primary-button">Add Task</button>
       </form>
 
-      <div className="form">
+      <div className={`form ${!showTagForm ? 'collapsed' : ''}`} style={{ maxWidth: '1000px', margin: '1rem auto' }}>
         <input type="text" placeholder="New Tag" value={newTagName} onChange={(e) => setNewTagName(e.target.value)} />
         <select value={newTagColor} onChange={(e) => setNewTagColor(e.target.value)}>
           <option value="">Select Color</option>
