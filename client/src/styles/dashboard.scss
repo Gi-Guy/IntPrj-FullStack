@@ -120,6 +120,10 @@ input[type="color"] {
   padding: 0.5rem;
   box-sizing: border-box;
 
+  .draggable {
+    cursor: grab;
+  }
+
   button {
     padding: 0.4rem 0.8rem;
     border: none;
