@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../styles/dashboard.scss';
 
-const categoryColors = ['red', 'green', 'blue', 'yellow'];
+// const categoryColors = ['red', 'green', 'blue', 'yellow'];
 
 type Task = {
   _id: string;
@@ -132,7 +132,8 @@ export default function Dashboard() {
     const headers = getAuthHeader();
     if (!headers) return;
     try {
-      const color = newCategoryColor || categoryColors[Math.floor(Math.random() * categoryColors.length)];
+      // const color = newCategoryColor || categoryColors[Math.floor(Math.random() * categoryColors.length)];
+      const color = newCategoryColor || '#cccccc';
       const res = await axios.post('/categories', { name: newCategoryName, color }, { headers });
       if (res.data) {
         setCategories((prev) => [...prev, res.data]);

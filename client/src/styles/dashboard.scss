@@ -50,6 +50,18 @@ body, html {
   margin: 0;
 }
 
+.form-toggle-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.toggle-button {
+  margin-right: 1rem;
+}
+
 .form {
   margin-bottom: 1.5rem;
   display: flex;
@@ -68,13 +80,7 @@ body, html {
   padding: 0;
   pointer-events: none;
 }
-.form-toggle-buttons {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
-}
+
 input[type="text"],
 select {
   padding: 0.5rem;
@@ -131,11 +137,12 @@ input[type="color"] {
 
 .task-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, 320px);
   justify-content: center;
   align-items: start;
   gap: 1.5rem;
   width: 100%;
+  padding: 0.5rem; 
 }
 
 .task-card {
@@ -148,11 +155,14 @@ input[type="color"] {
   justify-content: space-between;
   box-shadow: $shadow;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+}
 
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  }
+.task-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .task-card h3 {
