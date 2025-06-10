@@ -1,9 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import TaskEditForm from '../components/TaskEditForm';
 import '../styles/dashboard.scss';
-
-// const categoryColors = ['red', 'green', 'blue', 'yellow'];
 
 type Task = {
   _id: string;
@@ -41,6 +40,7 @@ export default function Dashboard() {
   const [selectedCategory, setSelectedCategory] = useState('GENERAL');
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [showTagForm, setShowTagForm] = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
 
   const getAuthHeader = () => {
     const token = localStorage.getItem('token');
@@ -132,7 +132,6 @@ export default function Dashboard() {
     const headers = getAuthHeader();
     if (!headers) return;
     try {
-      // const color = newCategoryColor || categoryColors[Math.floor(Math.random() * categoryColors.length)];
       const color = newCategoryColor || '#cccccc';
       const res = await axios.post('/categories', { name: newCategoryName, color }, { headers });
       if (res.data) {
@@ -180,6 +179,18 @@ export default function Dashboard() {
       setTasks((prev) => prev.filter(task => task._id !== _id));
     } catch (err) {
       console.error('Failed to delete task', err);
+    }
+  }
+
+  async function handleUpdateTask(updatedTask: Task): Promise<void> {
+    const headers = getAuthHeader();
+    if (!headers) return;
+    try {
+      await axios.put(`/tasks/${updatedTask._id}`, updatedTask, { headers });
+      setTasks((prev) => prev.map((task) => (task._id === updatedTask._id ? updatedTask : task)));
+      setEditingTaskId(null);
+    } catch (err) {
+      console.error('Failed to update task', err);
     }
   }
 
@@ -268,14 +279,26 @@ export default function Dashboard() {
           const categoryColor = categories.find(c => c.name === task.category)?.color || '#ccc';
           return (
             <div key={task._id} className="task-card">
-              <h3>{task.title}</h3>
-              <p>{task.description}</p>
-              <span className={`tag ${getTagColorClass(task.tag)}`}>{task.tag}</span>
-              <span className="tag category" style={{ backgroundColor: categoryColor }}>{task.category}</span>
-              <div className="task-actions">
-                <button className="edit">Edit</button>
-                <button className="danger" onClick={() => handleDelete(task._id)}>Delete</button>
-              </div>
+              {editingTaskId === task._id ? (
+                <TaskEditForm
+                  task={task}
+                  tags={tags}
+                  categories={categories}
+                  onCancel={() => setEditingTaskId(null)}
+                  onSave={handleUpdateTask}
+                />
+              ) : (
+                <>
+                  <h3>{task.title}</h3>
+                  <p>{task.description}</p>
+                  <span className={`tag ${getTagColorClass(task.tag)}`}>{task.tag}</span>
+                  <span className="tag category" style={{ backgroundColor: categoryColor }}>{task.category}</span>
+                  <div className="task-actions">
+                    <button className="edit" onClick={() => setEditingTaskId(task._id)}>Edit</button>
+                    <button className="danger" onClick={() => handleDelete(task._id)}>Delete</button>
+                  </div>
+                </>
+              )}
             </div>
           );
         })}
