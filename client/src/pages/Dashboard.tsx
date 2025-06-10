@@ -2,9 +2,14 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import TaskEditForm from '../components/TaskEditForm';
+import TagForm from '../components/TagForm';
+import TaskForm from '../components/TaskForm';
+import CategoryBar from '../components/CategoryBar';
 import '../styles/dashboard.scss';
 
-type Task = {
+// Types
+
+export type Task = {
   _id: string;
   title: string;
   description: string;
@@ -12,13 +17,13 @@ type Task = {
   category: string;
 };
 
-type Tag = {
+export type Tag = {
   _id: string;
   name: string;
   color: string;
 };
 
-type Category = {
+export type Category = {
   _id: string;
   name: string;
   color?: string;
@@ -27,14 +32,8 @@ type Category = {
 export default function Dashboard() {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [tag, setTag] = useState('');
   const [tags, setTags] = useState<Tag[]>([]);
-  const [newTagName, setNewTagName] = useState('');
-  const [newTagColor, setNewTagColor] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
-  const [category, setCategory] = useState('GENERAL');
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#cccccc');
   const [selectedCategory, setSelectedCategory] = useState('GENERAL');
@@ -95,30 +94,23 @@ export default function Dashboard() {
     fetchCategories();
   }, [fetchTasks, fetchTags, fetchCategories]);
 
-  const handleAddTask = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAddTask = async (data: Omit<Task, '_id'>) => {
     const headers = getAuthHeader();
     if (!headers) return;
     try {
-      const res = await axios.post('/tasks', { title, description, tag, category }, { headers });
+      const res = await axios.post('/tasks', data, { headers });
       setTasks((prev) => [...prev, res.data]);
-      setTitle('');
-      setDescription('');
-      setTag('');
-      setCategory('GENERAL');
     } catch (err) {
       console.error('Failed to add task', err);
     }
   };
 
-  const handleAddTag = async () => {
+  const handleAddTag = async (tagData: { name: string; color: string }) => {
     const headers = getAuthHeader();
     if (!headers) return;
     try {
-      const res = await axios.post('/tags', { name: newTagName, color: newTagColor }, { headers });
+      const res = await axios.post('/tags', tagData, { headers });
       setTags((prev) => [...prev, res.data]);
-      setNewTagName('');
-      setNewTagColor('');
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 409) {
         alert('Tag already exists.');
@@ -210,69 +202,30 @@ export default function Dashboard() {
         </button>
       </div>
 
-      <div className="category-bar">
-        <button
-          className={selectedCategory === 'GENERAL' ? 'selected' : ''}
-          onClick={() => setSelectedCategory('GENERAL')}
-          style={{ backgroundColor: '#999' }}
-        >
-          GENERAL
-        </button>
-        {categories.filter(c => c.name.toUpperCase() !== 'GENERAL').map(cat => (
-          <div key={cat._id} className="category-item">
-            <button
-              className={selectedCategory === cat.name ? 'selected' : ''}
-              onClick={() => setSelectedCategory(cat.name)}
-              style={{ backgroundColor: cat.color || '#ccc' }}
-            >
-              {cat.name}
-            </button>
-            <button className="edit" onClick={() => handleDeleteCategory(cat._id)}>❌</button>
-          </div>
-        ))}
-        <input
-          type="text"
-          placeholder="New Category"
-          value={newCategoryName}
-          onChange={(e) => setNewCategoryName(e.target.value)}
-        />
-        <input
-          type="color"
-          value={newCategoryColor}
-          onChange={(e) => setNewCategoryColor(e.target.value)}
-        />
-        <button className="primary-button" onClick={handleAddCategory}>Add</button>
-      </div>
+      <CategoryBar
+        categories={categories}
+        selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
+        newCategoryName={newCategoryName}
+        setNewCategoryName={setNewCategoryName}
+        newCategoryColor={newCategoryColor}
+        setNewCategoryColor={setNewCategoryColor}
+        onAdd={handleAddCategory}
+        onDelete={handleDeleteCategory}
+        showAddControls={true}
+      />
 
-      <form className={`form ${!showTaskForm ? 'collapsed' : ''}`} onSubmit={handleAddTask} style={{ maxWidth: '1000px', margin: '0 auto' }}>
-        <input type="text" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-        <input type="text" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} required />
-        <select value={tag} onChange={(e) => setTag(e.target.value)} required>
-          <option value="" disabled>Select Tag</option>
-          {tags.map((t) => (
-            <option key={t._id} value={t.name}>{t.name}</option>
-          ))}
-        </select>
-        <select value={category} onChange={(e) => setCategory(e.target.value)} required>
-          <option value="GENERAL">GENERAL</option>
-          {categories.filter(c => c.name.toUpperCase() !== 'GENERAL').map((c) => (
-            <option key={c._id} value={c.name}>{c.name}</option>
-          ))}
-        </select>
-        <button type="submit" className="primary-button">Add Task</button>
-      </form>
+      {showTaskForm && (
+        <TaskForm
+          tags={tags}
+          categories={categories}
+          onAdd={handleAddTask}
+        />
+      )}
 
-      <div className={`form ${!showTagForm ? 'collapsed' : ''}`} style={{ maxWidth: '1000px', margin: '1rem auto' }}>
-        <input type="text" placeholder="New Tag" value={newTagName} onChange={(e) => setNewTagName(e.target.value)} />
-        <select value={newTagColor} onChange={(e) => setNewTagColor(e.target.value)}>
-          <option value="">Select Color</option>
-          <option value="red">Red</option>
-          <option value="green">Green</option>
-          <option value="blue">Blue</option>
-          <option value="yellow">Yellow</option>
-        </select>
-        <button className="primary-button" onClick={handleAddTag}>Add Tag</button>
-      </div>
+      {showTagForm && (
+        <TagForm onAdd={handleAddTag} />
+      )}
 
       <div className="task-grid">
         {filteredTasks.map((task) => {
