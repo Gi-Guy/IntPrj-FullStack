@@ -17,15 +17,23 @@ body, html {
   height: 100%;
   font-family: Arial, sans-serif;
   background-color: #f8f9fa;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+#root {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .page {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  flex: 1;
   padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: none;
   box-sizing: border-box;
 }
 
@@ -34,10 +42,24 @@ body, html {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  position: relative;
+  z-index: 1;
 }
 
 .navbar h2 {
   margin: 0;
+}
+
+.form-toggle-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.toggle-button {
+  margin-right: 1rem;
 }
 
 .form {
@@ -46,12 +68,32 @@ body, html {
   gap: 1rem;
   flex-wrap: wrap;
   justify-content: center;
+  z-index: 0;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+  overflow: hidden;
+}
+
+.form.collapsed {
+  max-height: 0;
+  opacity: 0;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
 }
 
 input[type="text"],
 select {
   padding: 0.5rem;
   font-size: 1rem;
+}
+
+input[type="color"] {
+  width: 40px;
+  height: 40px;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: none;
 }
 
 .primary-button {
@@ -68,13 +110,87 @@ select {
   }
 }
 
+.category-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+  padding: 0.5rem;
+  box-sizing: border-box;
+
+  .draggable {
+    cursor: grab;
+  }
+
+  button {
+    padding: 0.4rem 0.8rem;
+    border: none;
+    cursor: pointer;
+    border-radius: $radius-small;
+    color: white;
+    background-color: #888;
+    flex-shrink: 0;
+
+    &.selected {
+      outline: 2px solid black;
+    }
+  }
+
+  .category-item {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+  }
+
+  .category-add {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-left: auto;
+
+    input[type="text"] {
+      padding: 0.3rem 0.6rem;
+      font-size: 1rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+
+    input[type="color"] {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border: none;
+      cursor: pointer;
+      background: none;
+    }
+
+    button {
+      padding: 0.4rem 0.8rem;
+      background-color: $color-success;
+      color: white;
+      border: none;
+      border-radius: $radius-small;
+      cursor: pointer;
+      transition: background 0.2s;
+
+      &:hover {
+        background: darken($color-success, 10%);
+      }
+    }
+  }
+}
+
 .task-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  justify-content: center;
+  grid-template-columns: repeat(3, 1fr);
+  justify-items: center;
   align-items: start;
-  gap: 1.5rem;
+  column-gap: 1rem;
+  row-gap: 1.5rem;
   width: 100%;
+  padding: 0.5rem;
 }
 
 .task-card {
@@ -87,11 +203,18 @@ select {
   justify-content: space-between;
   box-shadow: $shadow;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+  max-width: 320px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  height: auto;
+  min-height: 160px;
+}
 
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  }
+.task-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .task-card h3 {
@@ -99,7 +222,8 @@ select {
 }
 
 .task-card .tag,
-.task-card .category-label {
+.task-card .category-label,
+.task-card .tag.category {
   font-size: 0.85rem;
   font-weight: bold;
   color: white;
@@ -119,11 +243,10 @@ select {
 .tag-blue   { background-color: #0d6efd !important; }
 .tag-yellow { background-color: #ffc107 !important; }
 
-.category-label.category-gray    { background-color: $color-muted; color: white; }
-.category-label.category-red     { background-color: $color-danger; color: white; }
-.category-label.category-green   { background-color: $color-success; color: white; }
-.category-label.category-blue    { background-color: $color-primary; color: white; }
-.category-label.category-yellow  { background-color: #ffc107; color: #212529; }
+.category-label {
+  color: #fff;
+  background-color: #888;
+}
 
 .task-actions {
   margin-top: 1rem;
@@ -157,26 +280,5 @@ select {
 
   &:hover {
     background: darken($color-primary, 10%);
-  }
-}
-
-.category-bar {
-  margin-bottom: 1.5rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
-
-  button {
-    padding: 0.4rem 0.8rem;
-    border: none;
-    cursor: pointer;
-    background-color: #f1f1f1;
-    border-radius: $radius-small;
-
-    &.selected {
-      background-color: $color-primary;
-      color: white;
-    }
   }
 }

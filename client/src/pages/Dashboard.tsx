@@ -1,9 +1,15 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import TaskEditForm from '../components/TaskEditForm';
+import TagForm from '../components/TagForm';
+import TaskForm from '../components/TaskForm';
+import CategoryBar from '../components/CategoryBar';
 import '../styles/dashboard.scss';
 
-type Task = {
+// Types
+
+export type Task = {
   _id: string;
   title: string;
   description: string;
@@ -11,31 +17,29 @@ type Task = {
   category: string;
 };
 
-type Tag = {
+export type Tag = {
   _id: string;
   name: string;
   color: string;
 };
 
-type Category = {
+export type Category = {
   _id: string;
   name: string;
-  editable?: boolean;
+  color?: string;
 };
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [tag, setTag] = useState('');
   const [tags, setTags] = useState<Tag[]>([]);
-  const [newTagName, setNewTagName] = useState('');
-  const [newTagColor, setNewTagColor] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
-  const [category, setCategory] = useState('GENERAL');
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryColor, setNewCategoryColor] = useState('#cccccc');
   const [selectedCategory, setSelectedCategory] = useState('GENERAL');
+  const [showTaskForm, setShowTaskForm] = useState(false);
+  const [showTagForm, setShowTagForm] = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
 
   const getAuthHeader = () => {
     const token = localStorage.getItem('token');
@@ -90,30 +94,23 @@ export default function Dashboard() {
     fetchCategories();
   }, [fetchTasks, fetchTags, fetchCategories]);
 
-  const handleAddTask = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAddTask = async (data: Omit<Task, '_id'>) => {
     const headers = getAuthHeader();
     if (!headers) return;
     try {
-      const res = await axios.post('/tasks', { title, description, tag, category }, { headers });
+      const res = await axios.post('/tasks', data, { headers });
       setTasks((prev) => [...prev, res.data]);
-      setTitle('');
-      setDescription('');
-      setTag('');
-      setCategory('GENERAL');
     } catch (err) {
       console.error('Failed to add task', err);
     }
   };
 
-  const handleAddTag = async () => {
+  const handleAddTag = async (tagData: { name: string; color: string }) => {
     const headers = getAuthHeader();
     if (!headers) return;
     try {
-      const res = await axios.post('/tags', { name: newTagName, color: newTagColor }, { headers });
+      const res = await axios.post('/tags', tagData, { headers });
       setTags((prev) => [...prev, res.data]);
-      setNewTagName('');
-      setNewTagColor('');
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 409) {
         alert('Tag already exists.');
@@ -127,11 +124,20 @@ export default function Dashboard() {
     const headers = getAuthHeader();
     if (!headers) return;
     try {
-      const res = await axios.post('/categories', { name: newCategoryName }, { headers });
-      setCategories((prev) => [...prev, res.data]);
+      const color = newCategoryColor || '#cccccc';
+      const res = await axios.post('/categories', { name: newCategoryName, color }, { headers });
+      if (res.data) {
+        setCategories((prev) => [...prev, res.data]);
+      }
       setNewCategoryName('');
+      setNewCategoryColor('#cccccc');
     } catch (err) {
-      console.error('Failed to add category', err);
+      if (axios.isAxiosError(err)) {
+        const msg = err.response?.data?.message || 'Unknown error';
+        alert(`Failed to add category: ${msg}`);
+      } else {
+        console.error('Failed to add category', err);
+      }
     }
   };
 
@@ -168,6 +174,18 @@ export default function Dashboard() {
     }
   }
 
+  async function handleUpdateTask(updatedTask: Task): Promise<void> {
+    const headers = getAuthHeader();
+    if (!headers) return;
+    try {
+      await axios.put(`/tasks/${updatedTask._id}`, updatedTask, { headers });
+      setTasks((prev) => prev.map((task) => (task._id === updatedTask._id ? updatedTask : task)));
+      setEditingTaskId(null);
+    } catch (err) {
+      console.error('Failed to update task', err);
+    }
+  }
+
   return (
     <div className="page">
       <nav className="navbar">
@@ -175,72 +193,68 @@ export default function Dashboard() {
         <button className="primary-button" onClick={handleLogout}>Logout</button>
       </nav>
 
-      <div className="category-bar">
-        {categories.filter(c => c.name === 'General').map(g => (
-          <button key={g._id} className={selectedCategory === 'GENERAL' ? 'selected' : ''} onClick={() => setSelectedCategory('GENERAL')}>
-            GENERAL
-          </button>
-        ))}
-        {categories.filter(c => c.name !== 'General').map(cat => (
-          <div key={cat._id} className="category-item">
-            <button
-              className={selectedCategory === cat.name ? 'selected' : ''}
-              onClick={() => setSelectedCategory(cat.name)}
-            >
-              {cat.name}
-            </button>
-            {cat.name !== 'GENERAL' && (
-              <button className="edit" onClick={() => handleDeleteCategory(cat._id)}>❌</button>
-            )}
-          </div>
-        ))}
-        <input type="text" placeholder="New Category" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} />
-        <button className="primary-button" onClick={handleAddCategory}>Add</button>
+      <div className="form-toggle-buttons">
+        <button className="primary-button" onClick={() => setShowTaskForm(s => !s)}>
+          {showTaskForm ? 'Close Task Form' : 'Add Task'}
+        </button>
+        <button className="primary-button" onClick={() => setShowTagForm(s => !s)}>
+          {showTagForm ? 'Close Tag Form' : 'Add Tag'}
+        </button>
       </div>
 
-      <form className="form" onSubmit={handleAddTask}>
-        <input type="text" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-        <input type="text" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} required />
-        <select value={tag} onChange={(e) => setTag(e.target.value)} required>
-          <option value="" disabled>Select Tag</option>
-          {tags.map((t) => (
-            <option key={t._id} value={t.name}>{t.name}</option>
-          ))}
-        </select>
-        <select value={category} onChange={(e) => setCategory(e.target.value)} required>
-          <option value="" disabled>Select Category</option>
-          {categories.map((c) => (
-            <option key={c._id} value={c.name}>{c.name}</option>
-          ))}
-        </select>
-        <button type="submit" className="primary-button">Add Task</button>
-      </form>
+      <CategoryBar
+        categories={categories}
+        selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
+        newCategoryName={newCategoryName}
+        setNewCategoryName={setNewCategoryName}
+        newCategoryColor={newCategoryColor}
+        setNewCategoryColor={setNewCategoryColor}
+        onAdd={handleAddCategory}
+        onDelete={handleDeleteCategory}
+        showAddControls={true}
+      />
 
-      <div className="form">
-        <input type="text" placeholder="New Tag" value={newTagName} onChange={(e) => setNewTagName(e.target.value)} />
-        <select value={newTagColor} onChange={(e) => setNewTagColor(e.target.value)}>
-          <option value="">Select Color</option>
-          <option value="red">Red</option>
-          <option value="green">Green</option>
-          <option value="blue">Blue</option>
-          <option value="yellow">Yellow</option>
-        </select>
-        <button className="primary-button" onClick={handleAddTag}>Add Tag</button>
-      </div>
+      {showTaskForm && (
+        <TaskForm
+          tags={tags}
+          categories={categories}
+          onAdd={handleAddTask}
+        />
+      )}
+
+      {showTagForm && (
+        <TagForm onAdd={handleAddTag} />
+      )}
 
       <div className="task-grid">
-        {filteredTasks.map((task) => (
-          <div key={task._id} className="task-card">
-            <h3>{task.title}</h3>
-            <p>{task.description}</p>
-            <span className={`tag ${getTagColorClass(task.tag)}`}>{task.tag}</span>
-            <span className="category-label">{task.category}</span>
-            <div className="task-actions">
-              <button className="edit">Edit</button>
-              <button className="danger" onClick={() => handleDelete(task._id)}>Delete</button>
+        {filteredTasks.map((task) => {
+          const categoryColor = categories.find(c => c.name === task.category)?.color || '#ccc';
+          return (
+            <div key={task._id} className="task-card">
+              {editingTaskId === task._id ? (
+                <TaskEditForm
+                  task={task}
+                  tags={tags}
+                  categories={categories}
+                  onCancel={() => setEditingTaskId(null)}
+                  onSave={handleUpdateTask}
+                />
+              ) : (
+                <>
+                  <h3>{task.title}</h3>
+                  <p>{task.description}</p>
+                  <span className={`tag ${getTagColorClass(task.tag)}`}>{task.tag}</span>
+                  <span className="tag category" style={{ backgroundColor: categoryColor }}>{task.category}</span>
+                  <div className="task-actions">
+                    <button className="edit" onClick={() => setEditingTaskId(task._id)}>Edit</button>
+                    <button className="danger" onClick={() => handleDelete(task._id)}>Delete</button>
+                  </div>
+                </>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

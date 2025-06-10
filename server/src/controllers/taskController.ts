@@ -39,3 +39,16 @@ export const deleteTask = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ message: 'Failed to delete task', error: err });
   }
 };
+export const updateTask = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { title, description, tag, category } = req.body;
+  const task = await Task.findById(id);
+  if (!task) return res.status(404).json({ message: 'Task not found' });
+
+  task.title = title;
+  task.description = description;
+  task.tag = tag;
+  task.category = category;
+  await task.save();
+  res.json(task);
+};

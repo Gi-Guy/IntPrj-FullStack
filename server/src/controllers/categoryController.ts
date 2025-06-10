@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { Category } from '../models/Category';
 import { Task } from '../models/Task';
-import { authMiddleware } from '../middleware/auth';
+
 export const getCategories = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
@@ -18,10 +18,8 @@ export const getCategories = async (req: Request, res: Response) => {
 
 export const createCategory = async (req: Request, res: Response) => {
   try {
-    console.log('[DEBUG] req.body:', req.body);
-    console.log('[DEBUG] req.user:', (req as any).user);
     const userId = (req as any).userId;
-    const { name } = req.body;
+    const { name, color } = req.body;
 
     if (!name || typeof name !== 'string') {
       return res.status(400).json({ message: 'Category name is required' });
@@ -36,7 +34,7 @@ export const createCategory = async (req: Request, res: Response) => {
       return res.status(409).json({ message: 'Category already exists' });
     }
 
-    const category = new Category({ name, userId });
+    const category = new Category({ name, userId, color });
     const saved = await category.save();
     res.status(201).json(saved);
   } catch (err) {
@@ -67,7 +65,7 @@ export const updateCategory = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
     const { id } = req.params;
-    const { name } = req.body;
+    const { name, color } = req.body;
 
     if (!name || typeof name !== 'string') {
       return res.status(400).json({ message: 'Category name is required' });
@@ -82,7 +80,11 @@ export const updateCategory = async (req: Request, res: Response) => {
       return res.status(409).json({ message: 'Another category with the same name already exists' });
     }
 
-    const updated = await Category.findOneAndUpdate({ _id: id, userId }, { name }, { new: true });
+    const updated = await Category.findOneAndUpdate(
+      { _id: id, userId },
+      { name, color },
+      { new: true }
+    );
     if (!updated) return res.status(404).json({ message: 'Category not found' });
 
     res.json(updated);
@@ -90,4 +92,3 @@ export const updateCategory = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Failed to update category', error: err });
   }
 };
-
