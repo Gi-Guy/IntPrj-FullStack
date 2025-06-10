@@ -213,6 +213,10 @@ input[type="color"] {
   height: auto;
   min-height: 160px;
   
+  button {
+  touch-action: none;
+  pointer-events: none;
+}
 }
 
 
