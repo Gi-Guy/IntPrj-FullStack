@@ -202,7 +202,9 @@ input[type="color"] {
   flex-direction: column;
   justify-content: space-between;
   box-shadow: $shadow;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  //transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all 200ms ease;
+  will-change: transform;
   width: 100%;
   max-width: 320px;
   word-wrap: break-word;
@@ -210,7 +212,9 @@ input[type="color"] {
   white-space: normal;
   height: auto;
   min-height: 160px;
+  
 }
+
 
 .task-card:hover {
   transform: translateY(-4px);
@@ -220,7 +224,9 @@ input[type="color"] {
 .task-card h3 {
   margin: 0 0 0.5rem 0;
 }
-
+.task-card button {
+  pointer-events: auto;
+}
 .task-card .tag,
 .task-card .category-label,
 .task-card .tag.category {

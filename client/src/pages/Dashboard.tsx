@@ -5,9 +5,12 @@ import TaskEditForm from '../components/TaskEditForm';
 import TagForm from '../components/TagForm';
 import TaskForm from '../components/TaskForm';
 import CategoryBar from '../components/CategoryBar';
+import {DndContext,closestCenter,PointerSensor,useSensor,useSensors} from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
+import {arrayMove,SortableContext,verticalListSortingStrategy,} from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import '../styles/dashboard.scss';
-
-// Types
 
 export type Task = {
   _id: string;
@@ -29,6 +32,20 @@ export type Category = {
   color?: string;
 };
 
+function SortableTaskCard({ task, children }: { task: Task; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: task._id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="task-card">
+      {children}
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -40,6 +57,10 @@ export default function Dashboard() {
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [showTagForm, setShowTagForm] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor)
+  );
 
   const getAuthHeader = () => {
     const token = localStorage.getItem('token');
@@ -186,6 +207,16 @@ export default function Dashboard() {
     }
   }
 
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (active.id !== over?.id) {
+      const oldIndex = tasks.findIndex(t => t._id === active.id);
+      const newIndex = tasks.findIndex(t => t._id === over?.id);
+      const updated = arrayMove(tasks, oldIndex, newIndex);
+      setTasks(updated);
+    }
+  }
+
   return (
     <div className="page">
       <nav className="navbar">
@@ -216,46 +247,44 @@ export default function Dashboard() {
       />
 
       {showTaskForm && (
-        <TaskForm
-          tags={tags}
-          categories={categories}
-          onAdd={handleAddTask}
-        />
+        <TaskForm tags={tags} categories={categories} onAdd={handleAddTask} />
       )}
 
-      {showTagForm && (
-        <TagForm onAdd={handleAddTag} />
-      )}
+      {showTagForm && <TagForm onAdd={handleAddTag} />}
 
-      <div className="task-grid">
-        {filteredTasks.map((task) => {
-          const categoryColor = categories.find(c => c.name === task.category)?.color || '#ccc';
-          return (
-            <div key={task._id} className="task-card">
-              {editingTaskId === task._id ? (
-                <TaskEditForm
-                  task={task}
-                  tags={tags}
-                  categories={categories}
-                  onCancel={() => setEditingTaskId(null)}
-                  onSave={handleUpdateTask}
-                />
-              ) : (
-                <>
-                  <h3>{task.title}</h3>
-                  <p>{task.description}</p>
-                  <span className={`tag ${getTagColorClass(task.tag)}`}>{task.tag}</span>
-                  <span className="tag category" style={{ backgroundColor: categoryColor }}>{task.category}</span>
-                  <div className="task-actions">
-                    <button className="edit" onClick={() => setEditingTaskId(task._id)}>Edit</button>
-                    <button className="danger" onClick={() => handleDelete(task._id)}>Delete</button>
-                  </div>
-                </>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={filteredTasks.map(t => t._id)} strategy={verticalListSortingStrategy}>
+          <div className="task-grid">
+            {filteredTasks.map((task) => {
+              const categoryColor = categories.find(c => c.name === task.category)?.color || '#ccc';
+              return (
+                <SortableTaskCard key={task._id} task={task}>
+                  {editingTaskId === task._id ? (
+                    <TaskEditForm
+                      task={task}
+                      tags={tags}
+                      categories={categories}
+                      onCancel={() => setEditingTaskId(null)}
+                      onSave={handleUpdateTask}
+                    />
+                  ) : (
+                    <>
+                      <h3>{task.title}</h3>
+                      <p>{task.description}</p>
+                      <span className={`tag ${getTagColorClass(task.tag)}`}>{task.tag}</span>
+                      <span className="tag category" style={{ backgroundColor: categoryColor }}>{task.category}</span>
+                      <div className="task-actions">
+                        <button className="edit" onClick={() => setEditingTaskId(task._id)}>Edit</button>
+                        <button className="danger" onClick={() => handleDelete(task._id)}>Delete</button>
+                      </div>
+                    </>
+                  )}
+                </SortableTaskCard>
+              );
+            })}
+          </div>
+        </SortableContext>
+      </DndContext>
     </div>
   );
 }
