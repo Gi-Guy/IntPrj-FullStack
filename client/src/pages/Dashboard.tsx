@@ -36,7 +36,7 @@ export default function Dashboard() {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#cccccc');
   const [selectedCategory, setSelectedCategory] = useState('GENERAL');
-  // const [selectedStatus, setSelectedStatus] = useState<'todo' | 'in-progress' | 'done'>('todo');
+  const [selectedStatus, setSelectedStatus] = useState<'todo' | 'in-progress' | 'done' | 'all'>('all');
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [showTagForm, setShowTagForm] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -163,7 +163,12 @@ export default function Dashboard() {
     ? tasks
     : tasks.filter(task => task.category === selectedCategory);
 
-  const visibleTasks = filteredTasks.filter(task => task.status !== 'done');
+  const visibleTasks = selectedStatus === 'all'
+    ? filteredTasks.filter(task => task.status !== 'done')
+    : selectedStatus === 'done'
+      ? []
+      : filteredTasks.filter(task => task.status === selectedStatus);
+
   const completedTasks = filteredTasks.filter(task => task.status === 'done');
 
   const handleStatusChange = async (taskId: string, newStatus: Task['status']) => {
@@ -214,6 +219,16 @@ export default function Dashboard() {
         <button className="primary-button" onClick={() => setShowTagForm(s => !s)}>
           {showTagForm ? 'Close Tag Form' : 'Add Tag'}
         </button>
+      </div>
+
+      <div className="status-filter">
+        <label htmlFor="statusSelect">Filter by status:</label>
+        <select id="statusSelect" value={selectedStatus} onChange={e => setSelectedStatus(e.target.value as Task['status'] | 'all')}>
+          <option value="all">All</option>
+          <option value="todo">To Do</option>
+          <option value="in-progress">In Progress</option>
+          <option value="done">Done</option>
+        </select>
       </div>
 
       <CategoryBar
@@ -279,16 +294,45 @@ export default function Dashboard() {
         })}
       </div>
 
-      {completedTasks.length > 0 && (
+      {(selectedStatus === 'all' || selectedStatus === 'done') && completedTasks.length > 0 && (
         <>
           <h3>Completed Tasks</h3>
           <div className="task-grid completed">
-            {completedTasks.map((task) => (
-              <div key={task._id} className="task-card done">
-                <h3>{task.title}</h3>
-                <p>{task.description}</p>
-              </div>
-            ))}
+            {completedTasks.map((task) => {
+              const categoryColor = categories.find(c => c.name === task.category)?.color || '#ccc';
+              return (
+                <div key={task._id} className="task-card done">
+                  {editingTaskId === task._id ? (
+                    <TaskEditForm
+                      task={task}
+                      tags={tags}
+                      categories={categories}
+                      onCancel={() => setEditingTaskId(null)}
+                      onSave={handleUpdateTask}
+                    />
+                  ) : (
+                    <>
+                      <h3>{task.title}</h3>
+                      <p>{task.description}</p>
+                      <span className={`tag ${getTagColorClass(task.tag)}`}>{task.tag}</span>
+                      <span className="tag category" style={{ backgroundColor: categoryColor }}>{task.category}</span>
+                      <div className="task-actions">
+                        <select
+                          value={task.status}
+                          onChange={(e) => handleStatusChange(task._id, e.target.value as Task['status'])}
+                        >
+                          <option value="todo">To Do</option>
+                          <option value="in-progress">In Progress</option>
+                          <option value="done">Done</option>
+                        </select>
+                        <button className="edit" onClick={() => setEditingTaskId(task._id)}>Edit</button>
+                        <button className="danger" onClick={() => handleDelete(task._id)}>Delete</button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </>
       )}
