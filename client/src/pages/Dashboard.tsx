@@ -51,10 +51,10 @@ export default function Dashboard() {
     return { Authorization: `Bearer ${token}` };
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
-  };
+  // const handleLogout = () => {
+  //   localStorage.removeItem('token');
+  //   navigate('/login');
+  // };
 
   const fetchTasks = useCallback(async () => {
     const headers = getAuthHeader();
@@ -234,7 +234,7 @@ export default function Dashboard() {
     <div className="page">
       <nav className="navbar">
         <h2>My Tasks</h2>
-        <button className="primary-button" onClick={handleLogout}>Logout</button>
+        {/* <button className="primary-button" onClick={handleLogout}>Logout</button> */}
       </nav>
 
       <div className="form-toggle-buttons">

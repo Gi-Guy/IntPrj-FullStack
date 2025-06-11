@@ -1,0 +1,56 @@
+:root {
+  --analytics-bg: #f8f9fa;
+  --analytics-border: #dee2e6;
+  --analytics-heading: #212529;
+  --analytics-row-hover: #e9ecef;
+}
+
+.analytics-container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: var(--analytics-bg);
+}
+
+.analytics-title {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  color: var(--analytics-heading);
+  text-align: center;
+}
+
+.analytics-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+
+  th,
+  td {
+    border: 1px solid var(--analytics-border);
+    padding: 0.75rem 1rem;
+    text-align: left;
+  }
+
+  th {
+    background-color: #f1f3f5;
+    font-weight: bold;
+  }
+
+  tr:hover {
+    background-color: var(--analytics-row-hover);
+  }
+}
+
+.back-button {
+  display: inline-block;
+  background-color: #6c757d;
+  color: white;
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.back-button:hover {
+  background-color: #5a6268;
+}
