@@ -1,4 +1,4 @@
-import React from 'react';
+
 import type { Category } from '../pages/Dashboard';
 
 type Props = {
