@@ -43,6 +43,7 @@ export const deleteTask = async (req: AuthRequest, res: Response) => {
     const userId = req.user?.userId;
     const { id } = req.params;
     await Task.findOneAndDelete({ _id: id, userId });
+    await TimeLog.deleteMany({ taskId: id });
     res.json({ message: 'Task deleted' });
   } catch (err) {
     res.status(500).json({ message: 'Failed to delete task', error: err });
@@ -67,14 +68,14 @@ export const updateTask = async (req: Request, res: Response) => {
 
     if (previousStatus !== 'done' && status === 'done') {
       const now = new Date();
-      const duration = now.getTime() - task.createdAt.getTime();
-
       await TimeLog.create({
         userId: task.userId as Types.ObjectId,
         taskId: task._id as Types.ObjectId,
         startTime: task.createdAt,
         endTime: now
       });
+    } else if (previousStatus === 'done' && status !== 'done') {
+      await TimeLog.deleteMany({ taskId: task._id });
     }
 
     await task.save();
@@ -83,4 +84,3 @@ export const updateTask = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Failed to update task', error: err });
   }
 };
-
