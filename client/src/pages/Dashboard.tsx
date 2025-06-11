@@ -7,14 +7,13 @@ import TaskForm from '../components/TaskForm';
 import CategoryBar from '../components/CategoryBar';
 import '../styles/dashboard.scss';
 
-// Types
-
 export type Task = {
   _id: string;
   title: string;
   description: string;
   tag: string;
   category: string;
+  status: 'todo' | 'in-progress' | 'done';
 };
 
 export type Tag = {
@@ -37,6 +36,7 @@ export default function Dashboard() {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#cccccc');
   const [selectedCategory, setSelectedCategory] = useState('GENERAL');
+  // const [selectedStatus, setSelectedStatus] = useState<'todo' | 'in-progress' | 'done'>('todo');
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [showTagForm, setShowTagForm] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -94,11 +94,11 @@ export default function Dashboard() {
     fetchCategories();
   }, [fetchTasks, fetchTags, fetchCategories]);
 
-  const handleAddTask = async (data: Omit<Task, '_id'>) => {
+  const handleAddTask = async (data: Omit<Task, '_id' | 'status'>) => {
     const headers = getAuthHeader();
     if (!headers) return;
     try {
-      const res = await axios.post('/tasks', data, { headers });
+      const res = await axios.post('/tasks', { ...data, status: 'todo' }, { headers });
       setTasks((prev) => [...prev, res.data]);
     } catch (err) {
       console.error('Failed to add task', err);
@@ -162,6 +162,20 @@ export default function Dashboard() {
   const filteredTasks = selectedCategory === 'GENERAL'
     ? tasks
     : tasks.filter(task => task.category === selectedCategory);
+
+  const visibleTasks = filteredTasks.filter(task => task.status !== 'done');
+  const completedTasks = filteredTasks.filter(task => task.status === 'done');
+
+  const handleStatusChange = async (taskId: string, newStatus: Task['status']) => {
+    const headers = getAuthHeader();
+    if (!headers) return;
+    try {
+      await axios.put(`/tasks/${taskId}`, { status: newStatus }, { headers });
+      fetchTasks();
+    } catch (err) {
+      console.error('Failed to update task status', err);
+    }
+  };
 
   async function handleDelete(_id: string): Promise<void> {
     const headers = getAuthHeader();
@@ -228,10 +242,10 @@ export default function Dashboard() {
       )}
 
       <div className="task-grid">
-        {filteredTasks.map((task) => {
+        {visibleTasks.map((task) => {
           const categoryColor = categories.find(c => c.name === task.category)?.color || '#ccc';
           return (
-            <div key={task._id} className="task-card">
+            <div key={task._id} className={`task-card ${task.status === 'done' ? 'done' : ''}`}>
               {editingTaskId === task._id ? (
                 <TaskEditForm
                   task={task}
@@ -247,6 +261,14 @@ export default function Dashboard() {
                   <span className={`tag ${getTagColorClass(task.tag)}`}>{task.tag}</span>
                   <span className="tag category" style={{ backgroundColor: categoryColor }}>{task.category}</span>
                   <div className="task-actions">
+                    <select
+                      value={task.status}
+                      onChange={(e) => handleStatusChange(task._id, e.target.value as Task['status'])}
+                    >
+                      <option value="todo">To Do</option>
+                      <option value="in-progress">In Progress</option>
+                      <option value="done">Done</option>
+                    </select>
                     <button className="edit" onClick={() => setEditingTaskId(task._id)}>Edit</button>
                     <button className="danger" onClick={() => handleDelete(task._id)}>Delete</button>
                   </div>
@@ -256,6 +278,20 @@ export default function Dashboard() {
           );
         })}
       </div>
+
+      {completedTasks.length > 0 && (
+        <>
+          <h3>Completed Tasks</h3>
+          <div className="task-grid completed">
+            {completedTasks.map((task) => (
+              <div key={task._id} className="task-card done">
+                <h3>{task.title}</h3>
+                <p>{task.description}</p>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

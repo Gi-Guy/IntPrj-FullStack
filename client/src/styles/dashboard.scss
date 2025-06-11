@@ -211,7 +211,27 @@ input[type="color"] {
   height: auto;
   min-height: 160px;
 }
+.task-card.done {
+  background-color: #f0f0f0;
+  color: #777;
+  opacity: 0.7;
+}
 
+.task-card select {
+  margin-top: 0.5rem;
+}
+
+.task-card select option[value="todo"] {
+  color: #333;
+}
+
+.task-card select option[value="in-progress"] {
+  color: #007bff;
+}
+
+.task-card select option[value="done"] {
+  color: #999;
+}
 .task-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
