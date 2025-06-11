@@ -11,6 +11,33 @@ export const getTimeLogs = async (req: Request, res: Response) => {
   }
 };
 
+export const getTimeLogByTaskId = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    const { taskId } = req.params;
+
+    const log = await TimeLog.findOne({ userId, taskId });
+    if (!log) return res.status(404).json({ message: 'TimeLog not found' });
+
+    const durationMs = new Date(log.endTime).getTime() - new Date(log.startTime).getTime();
+    const durationSec = Math.floor(durationMs / 1000);
+    const hours = Math.floor(durationSec / 3600);
+    const minutes = Math.floor((durationSec % 3600) / 60);
+
+    res.json({
+      taskId: log.taskId,
+      endTime: log.endTime,
+      duration: {
+        hours,
+        minutes,
+        human: `${hours}h ${minutes}m`
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch log for task', error: err });
+  }
+};
+
 export const createTimeLog = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;

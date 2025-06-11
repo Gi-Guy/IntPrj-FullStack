@@ -40,6 +40,7 @@ export default function Dashboard() {
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [showTagForm, setShowTagForm] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [taskDurations, setTaskDurations] = useState<{ [taskId: string]: string }>({});
 
   const getAuthHeader = () => {
     const token = localStorage.getItem('token');
@@ -93,6 +94,30 @@ export default function Dashboard() {
     fetchTags();
     fetchCategories();
   }, [fetchTasks, fetchTags, fetchCategories]);
+
+  useEffect(() => {
+    const headers = getAuthHeader();
+    if (!headers) return;
+
+    const fetchDurations = async () => {
+      const doneTasks = tasks.filter(t => t.status === 'done');
+      const results: { [taskId: string]: string } = {};
+
+      await Promise.all(doneTasks.map(async (task) => {
+        try {
+          const res = await axios.get(`/timelogs/${task._id}`, { headers });
+          results[task._id] = res.data.duration.human;
+        } catch {
+          console.error(`Failed to fetch duration for task ${task._id}`);
+          results[task._id] = 'Unknown';
+        }
+      }));
+
+      setTaskDurations(results);
+    };
+
+    fetchDurations();
+  }, [tasks]);
 
   const handleAddTask = async (data: Omit<Task, '_id' | 'status'>) => {
     const headers = getAuthHeader();
@@ -316,6 +341,9 @@ export default function Dashboard() {
                       <p>{task.description}</p>
                       <span className={`tag ${getTagColorClass(task.tag)}`}>{task.tag}</span>
                       <span className="tag category" style={{ backgroundColor: categoryColor }}>{task.category}</span>
+                      {taskDurations[task._id] && (
+                        <p className="task-duration">Time Taken: {taskDurations[task._id]}</p>
+                      )}
                       <div className="task-actions">
                         <select
                           value={task.status}

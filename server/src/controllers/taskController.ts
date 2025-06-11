@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import { Task } from '../models/Task';
+import { TimeLog } from '../models/TimeLog';
+import { Types } from 'mongoose';
 
 interface AuthRequest extends Request {
   user?: { userId: string };
@@ -55,11 +57,25 @@ export const updateTask = async (req: Request, res: Response) => {
 
     if (!task) return res.status(404).json({ message: 'Task not found' });
 
+    const previousStatus = task.status;
+
     if (title !== undefined) task.title = title;
     if (description !== undefined) task.description = description;
     if (tag !== undefined) task.tag = tag;
     if (category !== undefined) task.category = category;
     if (status !== undefined) task.status = status;
+
+    if (previousStatus !== 'done' && status === 'done') {
+      const now = new Date();
+      const duration = now.getTime() - task.createdAt.getTime();
+
+      await TimeLog.create({
+        userId: task.userId as Types.ObjectId,
+        taskId: task._id as Types.ObjectId,
+        startTime: task.createdAt,
+        endTime: now
+      });
+    }
 
     await task.save();
     res.json(task);
@@ -67,3 +83,4 @@ export const updateTask = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Failed to update task', error: err });
   }
 };
+
